@@ -11,6 +11,10 @@ class Layer_Dense:
         self.output = np.dot(inputs, self.weights) + self.biases
         pass
 
+class Activation_ReLU:
+    def forward(self, inputs):
+        self.output = np.maximum(0, inputs)
+
 def main():
     np.random.seed(0) # for reproducibility
 
@@ -19,9 +23,13 @@ def main():
 
     dense1 = Layer_Dense(2, 3)
 
+    activation1 = Activation_ReLU()
+
     dense1.forward(X)
 
-    print(dense1.output[:5])
+    activation1.forward(dense1.output)
+
+    print(activation1.output[:5])
 
 if __name__ == "__main__":
     main()
