@@ -1,39 +1,27 @@
 import numpy as np
+from nnfs.datasets import spiral_data_generator
+
+class Layer_Dense:
+    def __init__(self, n_inputs, n_neurons):
+        self.weights = 0.01 * np.random.randn(n_inputs, n_neurons)
+        self.biases = np.zeros((1, n_neurons))
+        pass
+
+    def forward(self, inputs):
+        self.output = np.dot(inputs, self.weights) + self.biases
+        pass
 
 def main():
+    np.random.seed(0) # for reproducibility
 
-    # batch of inputs
-    inputs = [[1.0, 2.0, 3.0, 2.5], # input 1
-                [2.0, 5.0, -1.0, 2.0], # input 2
-                [-1.5, 2.7, 3.3, -0.8]] # input 3
-    weights = [[0.2, 0.8, -0.5, 1.0],
-                [0.5, -0.91, 0.26, -0.5],
-                [-0.26, -0.27, 0.17, 0.87]]
+    # dataset
+    X, y = spiral_data_generator(100, 3)
 
-    biases = [2.0, 3.0, 0.5]
-    
-    weights2 = [[0.1, -0.14, 0.5],
-                [-0.5, 0.12, -0.33],
-                [-0.44, 0.73, -0.13]]
+    dense1 = Layer_Dense(2, 3)
 
-    biases2 = [-1, 2, -0.5]
+    dense1.forward(X)
 
-    layer1_outputs = np.dot(inputs, np.array(weights).T) + biases
-
-    layer2_outputs = np.dot(layer1_outputs, np.array(weights2).T) + biases2
-
-    print(layer2_outputs)
-
-    """
-    input (4 neurons)
-    |  hidden layer (3 neurons)
-    |  |  output layer (3 neurons)
-    |  |  |
-    ()x()x()
-    ()x()x()
-    ()x()x()
-    ()x
-    """
+    print(dense1.output[:5])
 
 if __name__ == "__main__":
     main()
