@@ -2,14 +2,17 @@ import numpy as np
 
 def main():
 
-    inputs = [1.0, 2.0, 3.0, 2.5]
+    # batch of inputs
+    inputs = [[1.0, 2.0, 3.0, 2.5], # input 1
+                [2.0, 5.0, -1.0, 2.0], # input 2
+                [-1.5, 2.7, 3.3, -0.8]] # input 3
     weights = [[0.2, 0.8, -0.5, 1.0],
                 [0.5, -0.91, 0.26, -0.5],
                 [-0.26, -0.27, 0.17, 0.87]]
 
     biases = [2.0, 3.0, 0.5]
     
-    outputs = np.dot(weights, inputs) + biases
+    outputs = np.dot(inputs, np.array(weights).T) + biases
 
     print(outputs)
 
