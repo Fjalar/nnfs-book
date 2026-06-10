@@ -1,0 +1,10 @@
+[project]
+name = "nnfs"
+version = "0.1.0"
+description = "Following the book \"Neural Networks from Scratch in Python\""
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "matplotlib>=3.10.9",
+    "numpy>=2.4.6",
+]
