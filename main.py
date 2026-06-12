@@ -9,10 +9,24 @@ class Layer_Dense:
 
     def forward(self, inputs):
         self.output = np.dot(inputs, self.weights) + self.biases
+        self.inputs = inputs
+
+    # dvalues are the derivatives of the next layer
+    def backward(self, dvalues):
+        # gradients on parameters
+        self.dweights = np.dot(self.inputs.T, dvalues)
+        self.dbiases = np.sum(dvalues, axis=0, keepdims=True)
+        # gradients on values
+        self.dinputs = np.dot(dvalues, self.weights.T)
 
 class Activation_ReLU:
     def forward(self, inputs):
+        self.inputs = inputs
         self.output = np.maximum(0, inputs)
+
+    def backward(self, dvalues):
+        self.dinputs = dvalues.copy()
+        self.dinputs[self.inputs <= 0] = 0
 
 class Activation_Softmax:
     def forward(self, inputs):
@@ -21,6 +35,16 @@ class Activation_Softmax:
         exp_values = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
         probabilities = exp_values / np.sum(exp_values, axis=1, keepdims=True)
         self.output = probabilities
+
+        def backward(self, dvalues):
+            self.dinputs = np.empty_like(dvalues)
+
+            for index, (single_output, single_dvalues) in enumerate(zip(self.output, dvalues)):
+
+                single_output = single_output.reshape(-1, 1)
+                jacobian_matrix = np.diagflat(single_output) - np.dot(single_output, single_output.T)
+
+                self.dinputs[index] = np.dot(jacobian_matrix, single_dvalues)
 
 class Loss:
     def forward(self, y_pred, y_true):
@@ -52,6 +76,17 @@ class Loss_CategoricalCrossentropy(Loss):
 
         negative_log_likelihoods = -np.log(correct_confidences)
         return negative_log_likelihoods
+
+    def backward(self, dvalues, y_true):
+        samples = len(dvalues)
+        labels = len(dvalues[0])
+
+        # if sparse labeling, turn into one-hot (index 1 into array of [0, 1, ...])
+        if len(y_true.shape) == 1:
+            y_true = np.eye(labels)[y_true]
+
+        self.dinputs = -y_true / dvalues
+        self.dinputs = self.dinputs / samples
 
 def main():
     np.random.seed(0) # for reproducibility
