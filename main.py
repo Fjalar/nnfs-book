@@ -125,35 +125,41 @@ def main():
     X, y = spiral_data_generator(100, 3)
 
     # network definition
-    dense1 = Layer_Dense(2, 3)
+    dense1 = Layer_Dense(2, 64)
     activation1 = Activation_ReLU()
-    dense2 = Layer_Dense(3, 3)
+    dense2 = Layer_Dense(64, 3)
     loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
     optimizer = Optimizer_SGD()
 
-    # forward pass
-    dense1.forward(X)
-    activation1.forward(dense1.output)
-    dense2.forward(activation1.output)
-    loss = loss_activation.forward(dense2.output, y)
 
-    # result after first forward pass
-    print(f"loss: {loss}")
-    predictions = np.argmax(loss_activation.output, axis=1)
-    if len(y.shape) == 2:
-        y = np.argmax(y, axis=1)
-    accuracy = np.mean(predictions == y)
-    print(f"accuracy: {accuracy}")
+    for epoch in range(10001):
+        # forward pass
+        dense1.forward(X)
+        activation1.forward(dense1.output)
+        dense2.forward(activation1.output)
+        loss = loss_activation.forward(dense2.output, y)
 
-    # backward pass
-    loss_activation.backward(loss_activation.output, y)
-    dense2.backward(loss_activation.dinputs)
-    activation1.backward(dense2.dinputs)
-    dense1.backward(activation1.dinputs)
+        # result after first forward pass
+        predictions = np.argmax(loss_activation.output, axis=1)
+        if len(y.shape) == 2:
+            y = np.argmax(y, axis=1)
+        accuracy = np.mean(predictions == y)
 
-    # update weights and biases based on gradients from backward pass
-    optimizer.update_params(dense1)
-    optimizer.update_params(dense2)
+        if not epoch % 100:
+            print(f"epoch {epoch}")
+            print(f"accuracy: {accuracy}")
+            print(f"loss: {loss}")
+
+        # backward pass
+        loss_activation.backward(loss_activation.output, y)
+        dense2.backward(loss_activation.dinputs)
+        activation1.backward(dense2.dinputs)
+        dense1.backward(activation1.dinputs)
+
+        # update weights and biases based on gradients from backward pass
+        optimizer.update_params(dense1)
+        optimizer.update_params(dense2)
+
 
 if __name__ == "__main__":
     main()
