@@ -155,6 +155,19 @@ def main():
         optimizer.update_params(dense2)
         optimizer.post_update_params()
 
+    X_test, y_test = spiral_data_generator(100, 3)
+    dense1.forward(X_test)
+    activation1.forward(dense1.output)
+    dense2.forward(activation1.output)
+    loss = loss_activation.forward(dense2.output, y_test)
+    predictions = np.argmax(loss_activation.output, axis=1)
+    if len(y_test.shape) == 2:
+        y_test = np.argmax(y_test, axis=1)
+    accuracy = np.mean(predictions==y_test)
+
+    print(f"Validation accuracy: {accuracy:.3f}")
+    print(f"Validation loss: {loss:.3f}")
+
 
 if __name__ == "__main__":
     main()
