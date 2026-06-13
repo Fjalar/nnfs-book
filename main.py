@@ -110,6 +110,14 @@ class Activation_Softmax_Loss_CategoricalCrossentropy():
         self.dinputs[range(samples), y_true] -= 1
         self.dinputs = self.dinputs / samples
 
+class Optimizer_SGD:
+    def __init__(self, learning_rate=1.0):
+        self.learning_rate = learning_rate
+
+    def update_params(self, layer):
+        layer.weights -= self.learning_rate * layer.dweights
+        layer.biases -= self.learning_rate * layer.dbiases
+
 def main():
     np.random.seed(0) # for reproducibility
 
@@ -121,6 +129,7 @@ def main():
     activation1 = Activation_ReLU()
     dense2 = Layer_Dense(3, 3)
     loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
+    optimizer = Optimizer_SGD()
 
     # forward pass
     dense1.forward(X)
@@ -142,10 +151,9 @@ def main():
     activation1.backward(dense2.dinputs)
     dense1.backward(activation1.dinputs)
 
-    print(dense1.dweights)
-    print(dense1.dbiases)
-    print(dense2.dweights)
-    print(dense2.dbiases)
+    # update weights and biases based on gradients from backward pass
+    optimizer.update_params(dense1)
+    optimizer.update_params(dense2)
 
 if __name__ == "__main__":
     main()
