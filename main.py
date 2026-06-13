@@ -30,21 +30,22 @@ class Activation_ReLU:
 
 class Activation_Softmax:
     def forward(self, inputs):
+        self.inputs = inputs
         # subtract largest input to prevent exploding values, doesn't impact result
         # (aside from floating point error)
         exp_values = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
         probabilities = exp_values / np.sum(exp_values, axis=1, keepdims=True)
         self.output = probabilities
 
-        def backward(self, dvalues):
-            self.dinputs = np.empty_like(dvalues)
+    def backward(self, dvalues):
+        self.dinputs = np.empty_like(dvalues)
 
-            for index, (single_output, single_dvalues) in enumerate(zip(self.output, dvalues)):
+        for index, (single_output, single_dvalues) in enumerate(zip(self.output, dvalues)):
 
-                single_output = single_output.reshape(-1, 1)
-                jacobian_matrix = np.diagflat(single_output) - np.dot(single_output, single_output.T)
+            single_output = single_output.reshape(-1, 1)
+            jacobian_matrix = np.diagflat(single_output) - np.dot(single_output, single_output.T)
 
-                self.dinputs[index] = np.dot(jacobian_matrix, single_dvalues)
+            self.dinputs[index] = np.dot(jacobian_matrix, single_dvalues)
 
 class Loss:
     def forward(self, y_pred, y_true):
@@ -88,6 +89,27 @@ class Loss_CategoricalCrossentropy(Loss):
         self.dinputs = -y_true / dvalues
         self.dinputs = self.dinputs / samples
 
+class Activation_Softmax_Loss_CategoricalCrossentropy():
+    """Combines Softmax and Crossentropy for an optimization in the output layer derivative"""
+
+    def __init__(self):
+        self.activation = Activation_Softmax()
+        self.loss = Loss_CategoricalCrossentropy()
+
+    def forward(self, inputs, y_true):
+        self.activation.forward(inputs)
+        self.output = self.activation.output
+        return self.loss.calculate(self.output, y_true)
+
+    def backward(self, dvalues, y_true):
+        samples = len(dvalues)
+        # check if index or one-hot again
+        if len(y_true.shape) == 2:
+            y_true = np.argmax(y_true, axis=1)
+        self.dinputs = dvalues.copy()
+        self.dinputs[range(samples), y_true] -= 1
+        self.dinputs = self.dinputs / samples
+
 def main():
     np.random.seed(0) # for reproducibility
 
@@ -100,31 +122,23 @@ def main():
 
     dense2 = Layer_Dense(3, 3)
 
-    activation2 = Activation_Softmax()
-
-    loss_function = Loss_CategoricalCrossentropy()
-
     dense1.forward(X)
 
     activation1.forward(dense1.output)
 
     dense2.forward(activation1.output)
 
-    activation2.forward(dense2.output)
+    loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
 
-    print(activation2.output[:5])
+    loss_activation.forward(dense2.output, y)
 
-    loss = loss_function.calculate(activation2.output, y)
-
-    print(f"loss: {loss}")
-
-    predictions = np.argmax(activation2.output, axis=1)
+    predictions = np.argmax(loss_activation.output, axis=1)
 
     if len(y.shape) == 2:
         y = np.argmax(y, axis=1)
     accuracy = np.mean(predictions == y)
 
     print(f"accuracy: {accuracy}")
-    
+
 if __name__ == "__main__":
     main()
